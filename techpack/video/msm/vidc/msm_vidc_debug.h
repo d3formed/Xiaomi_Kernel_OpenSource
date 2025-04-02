@@ -176,9 +176,9 @@ void msm_vidc_debugfs_update(struct msm_vidc_inst *inst,
 int msm_vidc_check_ratelimit(void);
 int get_sid(u32 *sid, u32 session_type);
 void update_log_ctxt(u32 sid, u32 session_type, u32 fourcc);
-inline char *get_codec_name(u32 sid);
-inline void put_sid(u32 sid);
-inline bool is_print_allowed(u32 sid, u32 level);
+char *get_codec_name(u32 sid);
+void put_sid(u32 sid);
+bool is_print_allowed(u32 sid, u32 level);
 
 static inline char *get_debug_level_str(int level)
 {
@@ -201,28 +201,25 @@ static inline char *get_debug_level_str(int level)
 	}
 }
 
-static inline void tic(struct msm_vidc_inst *i, enum profiling_points p,
-				 char *b)
+void tic(struct msm_vidc_inst *i, enum profiling_points p, char *b)
 {
 	struct timeval __ddl_tv;
 
 	if (!i->debug.pdata[p].name[0])
 		memcpy(i->debug.pdata[p].name, b, 64);
-	if ((msm_vidc_debug & VIDC_PERF) &&
-		i->debug.pdata[p].sampling) {
+	if ((msm_vidc_debug & VIDC_PERF) && i->debug.pdata[p].sampling) {
 		do_gettimeofday(&__ddl_tv);
 		i->debug.pdata[p].start =
 			(__ddl_tv.tv_sec * 1000) + (__ddl_tv.tv_usec / 1000);
-			i->debug.pdata[p].sampling = false;
+		i->debug.pdata[p].sampling = false;
 	}
 }
 
-static inline void toc(struct msm_vidc_inst *i, enum profiling_points p)
+void toc(struct msm_vidc_inst *i, enum profiling_points p)
 {
 	struct timeval __ddl_tv;
 
-	if ((msm_vidc_debug & VIDC_PERF) &&
-		!i->debug.pdata[p].sampling) {
+	if ((msm_vidc_debug & VIDC_PERF) && !i->debug.pdata[p].sampling) {
 		do_gettimeofday(&__ddl_tv);
 		i->debug.pdata[p].stop = (__ddl_tv.tv_sec * 1000)
 			+ (__ddl_tv.tv_usec / 1000);
@@ -232,13 +229,12 @@ static inline void toc(struct msm_vidc_inst *i, enum profiling_points p)
 	}
 }
 
-static inline void show_stats(struct msm_vidc_inst *i)
+void show_stats(struct msm_vidc_inst *i)
 {
 	int x;
 
 	for (x = 0; x < MAX_PROFILING_POINTS; x++) {
-		if (i->debug.pdata[x].name[0] &&
-				(msm_vidc_debug & VIDC_PERF)) {
+		if (i->debug.pdata[x].name[0] && (msm_vidc_debug & VIDC_PERF)) {
 			if (i->debug.samples) {
 				s_vpr_p(i->sid, "%s averaged %d ms/sample\n",
 						i->debug.pdata[x].name,
@@ -246,39 +242,33 @@ static inline void show_stats(struct msm_vidc_inst *i)
 						i->debug.samples);
 			}
 
-			s_vpr_p(i->sid, "%s Samples: %d\n",
-				i->debug.pdata[x].name, i->debug.samples);
+			s_vpr_p(i->sid, "%s Samples: %d\n", i->debug.pdata[x].name, i->debug.samples);
 		}
 	}
 }
 
-static inline void msm_vidc_res_handle_fatal_hw_error(
-	struct msm_vidc_platform_resources *resources,
-	bool enable_fatal)
+void msm_vidc_res_handle_fatal_hw_error(struct msm_vidc_platform_resources *resources, bool enable_fatal)
 {
 	enable_fatal &= resources->debug_timeout;
 	MSM_VIDC_ERROR(enable_fatal);
 }
 
-static inline void msm_vidc_handle_hw_error(struct msm_vidc_core *core)
+void msm_vidc_handle_hw_error(struct msm_vidc_core *core)
 {
 	bool enable_fatal = true;
 
-	/*
-	 * In current implementation user-initiated SSR triggers
-	 * a fatal error from hardware. However, there is no way
-	 * to know if fatal error is due to SSR or not. Handle
-	 * user SSR as non-fatal.
-	 */
+	// In current implementation user-initiated SSR triggers
+	// a fatal error from hardware. However, there is no way
+	// to know if fatal error is due to SSR or not. Handle
+	// user SSR as non-fatal.
 	if (core->trigger_ssr) {
 		core->trigger_ssr = false;
 		enable_fatal = false;
 	}
 
-	/* Video driver can decide FATAL handling of HW errors
-	 * based on multiple factors. This condition check will
-	 * be enhanced later.
-	 */
+	// Video driver can decide FATAL handling of HW errors
+	// based on multiple factors. This condition check will
+	// be enhanced later.
 	msm_vidc_res_handle_fatal_hw_error(&core->resources, enable_fatal);
 }
 
